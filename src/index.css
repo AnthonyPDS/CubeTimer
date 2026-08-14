@@ -726,25 +726,27 @@ body {
   background: transparent;
   color: var(--text-muted);
   border: none;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   transition: all var(--transition-fast);
 }
 
 .tab-btn:hover {
   color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .tab-btn.active {
-  background-color: var(--bg-hover);
-  color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: #ffffff;
   font-weight: 600;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
 .chart-wrapper {
@@ -998,6 +1000,32 @@ body {
   flex-wrap: wrap;
 }
 
+.category-tab {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.category-tab:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-highlight);
+}
+
+.category-tab.active {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
 .group-filter-bar {
   padding-top: 12px;
   border-top: 1px solid var(--border-color);
@@ -1038,6 +1066,28 @@ body {
 
 .alg-card.is-favorite {
   border-color: rgba(245, 158, 11, 0.4);
+}
+
+.fav-star-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.fav-star-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f59e0b;
+}
+
+.fav-star-btn.active {
+  color: #f59e0b;
 }
 
 .alg-card-header {
@@ -1117,31 +1167,9 @@ body {
  * Algorithm Trainer Modal
  * ------------------------------------- */
 
-.alg-trainer-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-.alg-trainer-modal-content {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+.modal-content.alg-trainer-modal {
   width: 95%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  max-width: 900px;
 }
 
 .trainer-header {

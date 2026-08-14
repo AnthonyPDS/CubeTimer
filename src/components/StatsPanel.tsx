@@ -64,22 +64,22 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ stats, solves }) => {
             <td className="text-green font-bold">{formatTime(stats.bestSingle)}</td>
           </tr>
           <tr>
-            <td className="stat-name">mo3 (Média de 3)</td>
+            <td className="stat-name">mo3</td>
             <td>{stats.currentMo3 === Infinity ? 'DNF' : formatTime(stats.currentMo3)}</td>
             <td>{formatTime(stats.bestMo3)}</td>
           </tr>
           <tr>
-            <td className="stat-name">ao5 (Média de 5)</td>
+            <td className="stat-name">ao5</td>
             <td>{stats.currentAo5 === Infinity ? 'DNF' : formatTime(stats.currentAo5)}</td>
             <td className="text-green font-bold">{formatTime(stats.bestAo5)}</td>
           </tr>
           <tr>
-            <td className="stat-name">ao12 (Média de 12)</td>
+            <td className="stat-name">ao12</td>
             <td>{stats.currentAo12 === Infinity ? 'DNF' : formatTime(stats.currentAo12)}</td>
             <td className="text-green font-bold">{formatTime(stats.bestAo12)}</td>
           </tr>
           <tr>
-            <td className="stat-name">ao100 (Média de 100)</td>
+            <td className="stat-name">ao100</td>
             <td>{stats.currentAo100 === Infinity ? 'DNF' : formatTime(stats.currentAo100)}</td>
             <td className="text-green font-bold">{formatTime(stats.bestAo100)}</td>
           </tr>
@@ -103,7 +103,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ stats, solves }) => {
             </thead>
             <tbody>
               <tr>
-                <td className="stat-name">Cruz (Cross)</td>
+                <td className="stat-name">Cruz</td>
                 <td>{formatTime(crossStats.mean)}</td>
                 <td className="text-green font-bold">{formatTime(crossStats.best)}</td>
               </tr>

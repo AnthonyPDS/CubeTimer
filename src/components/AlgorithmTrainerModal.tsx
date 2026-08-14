@@ -3,7 +3,7 @@ import type { AlgorithmCase } from '../data/cfopAlgorithms';
 import { formatTime, calculateMoN, calculateAoN } from '../utils/statsCalculator';
 import type { Solve } from '../types';
 import confetti from 'canvas-confetti';
-import { X, Zap, Copy, Check } from 'lucide-react';
+import { X, Zap } from 'lucide-react';
 
 interface AlgorithmTrainerModalProps {
   alg: AlgorithmCase | null;
@@ -21,7 +21,6 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [lastTime, setLastTime] = useState<number | null>(null);
-  const [copiedSetup, setCopiedSetup] = useState(false);
 
   const startTimeRef = useRef<number | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -137,12 +136,6 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
     ? (alg.moveCount / (lastTime / 1000)).toFixed(1)
     : null;
 
-  const handleCopySetup = () => {
-    navigator.clipboard.writeText(alg.setup);
-    setCopiedSetup(true);
-    setTimeout(() => setCopiedSetup(false), 1500);
-  };
-
   // Compute stats
   const pb = solves.length > 0 ? Math.min(...solves) : null;
   const dummySolves: Solve[] = solves.map((time, idx) => ({
@@ -161,7 +154,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   const md100 = calculateAoN(dummySolves, 100);
 
   let timerClass = 'alg-timer-display';
-  let instruction = 'Pressione a BARRA DE ESPAÇO ou toque na tela para cronometrar';
+  let instruction = '';
 
   if (timerState === 'holding') {
     timerClass += ' holding';
@@ -188,34 +181,36 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
         </div>
 
         <div className="modal-body">
-          {/* Target Algorithm Moves */}
-          <div className="alg-target-box">
-            <span className="box-label">Algoritmo ({alg.moveCount} movimentos):</span>
-            <div className="alg-moves-text">{alg.moves}</div>
-          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Target Algorithm Moves */}
+              <div className="alg-target-box" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <span className="box-label">Algoritmo ({alg.moveCount} movimentos):</span>
+                <div className="alg-moves-text" style={{ fontSize: '1.2rem', margin: '8px 0' }}>{alg.moves}</div>
+              </div>
 
-          {/* Setup Scramble Box */}
-          <div className="alg-setup-box">
-            <div className="setup-header">
-              <span className="box-label">Setup Scramble (para embaralhar o cubo):</span>
-              <button onClick={handleCopySetup} className="btn-tag" title="Copiar Setup">
-                {copiedSetup ? <Check size={12} className="text-green" /> : <Copy size={12} />} Setup
-              </button>
+              {/* Setup Scramble Box */}
+              <div className="alg-setup-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="setup-header">
+                  <span className="box-label">Setup Scramble</span>
+                </div>
+                <div className="setup-text">{alg.setup}</div>
+              </div>
             </div>
-            <div className="setup-text">{alg.setup}</div>
-          </div>
 
-          {/* Dedicated Algorithm Timer */}
-          <div
-            className="alg-timer-area"
-            onClick={() => {
-              if (timerStateRef.current === 'running') {
-                stopTimer();
-              }
-            }}
-          >
-            <div className={timerClass}>{formatTime(elapsedTime)}</div>
-            <div className="alg-timer-instruction">{instruction}</div>
+            {/* Dedicated Algorithm Timer */}
+            <div
+              className="alg-timer-area"
+              style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              onClick={() => {
+                if (timerStateRef.current === 'running') {
+                  stopTimer();
+                }
+              }}
+            >
+              <div className={timerClass}>{formatTime(elapsedTime)}</div>
+              <div className="alg-timer-instruction">{instruction}</div>
+            </div>
           </div>
 
           {/* Performance Stats */}

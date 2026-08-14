@@ -8,7 +8,8 @@ import {
 import type { AlgorithmCase, CfopCategory } from '../data/cfopAlgorithms';
 import { AlgorithmTrainerModal } from './AlgorithmTrainerModal';
 import { formatTime } from '../utils/statsCalculator';
-import { Search, Star, Copy, Check, Zap, BookOpen } from 'lucide-react';
+import { Search, Star, Zap, BookOpen } from 'lucide-react';
+import { CubeVisualizer } from './CubeVisualizer';
 
 interface AlgorithmLibraryProps {
   favorites: string[];
@@ -26,7 +27,7 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
   const [activeCategory, setActiveCategory] = useState<CfopCategory | 'FAVORITES'>('PLL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+
 
   // Trainer Modal State
   const [trainingAlg, setTrainingAlg] = useState<AlgorithmCase | null>(null);
@@ -60,12 +61,6 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
 
     return list;
   }, [activeCategory, selectedGroup, searchQuery, favorites]);
-
-  const handleCopyMoves = (id: string, moves: string) => {
-    navigator.clipboard.writeText(moves);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1500);
-  };
 
   return (
     <div className="algorithm-library-container fade-in">
@@ -134,50 +129,46 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
             const pb = solves.length > 0 ? Math.min(...solves) : null;
 
             return (
-              <div key={alg.id} className="alg-card">
+              <div 
+                key={alg.id} 
+                className="alg-card cursor-pointer"
+                onClick={() => setTrainingAlg(alg)}
+              >
                 <div className="alg-card-header">
                   <div>
-                    <h3 className="alg-title">{alg.name}</h3>
-                    <span className="alg-group-tag">{alg.group}</span>
+                    <h3 className="alg-name">{alg.name}</h3>
                   </div>
                   <button
-                    onClick={() => onToggleFavorite(alg.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(alg.id);
+                    }}
                     className={`fav-star-btn ${isFav ? 'active' : ''}`}
                     title={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                   >
                     <Star size={18} fill={isFav ? '#f59e0b' : 'none'} />
                   </button>
                 </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', minHeight: '150px' }}>
+                  <CubeVisualizer moves={alg.moves} category={alg.category} />
+                </div>
 
                 <div className="alg-moves-box">
                   <code>{alg.moves}</code>
                 </div>
 
-                <div className="alg-card-footer">
+                <div className="alg-card-footer" style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)' }}>
                   {pb ? (
-                    <span className="pb-tag text-green" title="Seu melhor tempo cronometrado neste algoritmo">
+                    <span className="pb-tag text-green" style={{ fontFamily: 'JetBrains Mono', fontSize: '0.8rem', fontWeight: 600 }}>
                       PB: {formatTime(pb)}
                     </span>
                   ) : (
-                    <span className="moves-count">{alg.moveCount} giros</span>
+                    <span className="moves-count text-muted" style={{ fontSize: '0.8rem' }}>{alg.moveCount} giros</span>
                   )}
-
-                  <div className="card-actions">
-                    <button
-                      onClick={() => handleCopyMoves(alg.id, alg.moves)}
-                      className="btn-secondary-sm"
-                      title="Copiar sequência de movimentos"
-                    >
-                      {copiedId === alg.id ? <Check size={14} className="text-green" /> : <Copy size={14} />} Copiar
-                    </button>
-                    <button
-                      onClick={() => setTrainingAlg(alg)}
-                      className="btn-primary-sm"
-                      title="Abrir o cronômetro para praticar este algoritmo"
-                    >
-                      <Zap size={14} /> Treinar
-                    </button>
-                  </div>
+                  <span className="text-accent" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Zap size={14} /> Treinar
+                  </span>
                 </div>
               </div>
             );
