@@ -4,7 +4,7 @@ import { formatTime, calculateMoN, calculateAoN } from '../utils/statsCalculator
 import type { Solve } from '../types';
 import confetti from 'canvas-confetti';
 import { X, Zap, RotateCcw, SkipBack, Pause, Play, SkipForward } from 'lucide-react';
-import { TwistyPlayer } from 'cubing/twisty';
+import 'cubing/twisty';
 
 interface AlgorithmTrainerModalProps {
   alg: AlgorithmCase | null;
@@ -63,9 +63,6 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
 
   useEffect(() => {
     timerStateRef.current = timerState;
-    if (TwistyPlayer) {
-      // no-op
-    }
   }, [timerState]);
 
   // Synchronize properties directly to the DOM element to bypass React 19 / kebab-case property mapping issues
