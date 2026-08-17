@@ -3,7 +3,8 @@ import type { AlgorithmCase } from '../data/cfopAlgorithms';
 import { formatTime, calculateMoN, calculateAoN } from '../utils/statsCalculator';
 import type { Solve } from '../types';
 import confetti from 'canvas-confetti';
-import { X, Zap } from 'lucide-react';
+import { X, Zap, RotateCcw, SkipBack, Pause, Play, SkipForward } from 'lucide-react';
+import { TwistyPlayer } from 'cubing/twisty';
 
 interface AlgorithmTrainerModalProps {
   alg: AlgorithmCase | null;
@@ -27,8 +28,22 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   const holdTimeoutRef = useRef<number | null>(null);
   const timerStateRef = useRef<'idle' | 'holding' | 'ready' | 'running'>('idle');
 
+  const playerRef = useRef<any>(null);
+
+  // Pre-process setup to avoid double rotation issues in some PLL cases
+  let safeSetup = '';
+  if (alg) {
+    safeSetup = alg.setup;
+    if (alg.category === 'PLL' && safeSetup.endsWith(" x'")) {
+      safeSetup = safeSetup.slice(0, -3).trim();
+    }
+  }
+
   useEffect(() => {
     timerStateRef.current = timerState;
+    if (TwistyPlayer) {
+      // no-op
+    }
   }, [timerState]);
 
   const updateTimer = useCallback(() => {
@@ -169,7 +184,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content alg-trainer-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content alg-trainer-modal" style={{ maxWidth: '820px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="title-group">
             <Zap size={20} className="text-accent" />
@@ -181,24 +196,78 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
         </div>
 
         <div className="modal-body">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Target Algorithm Moves */}
-              <div className="alg-target-box" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span className="box-label">Algoritmo ({alg.moveCount} movimentos):</span>
-                <div className="alg-moves-text" style={{ fontSize: '1.2rem', margin: '8px 0' }}>{alg.moves}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1.2fr 1fr', gap: '24px', marginBottom: '16px' }}>
+            {/* Column 1: 3D Cube Player & Controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '300px', height: '300px', background: '#121214', borderRadius: '12px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid var(--border-color)' }}>
+                {React.createElement('twisty-player', {
+                  ref: playerRef,
+                  alg: alg.moves,
+                  'experimental-setup-alg': 'z2 ' + safeSetup,
+                  'control-panel': 'none',
+                  background: 'none',
+                  style: { width: '100%', height: '100%' }
+                })}
               </div>
-
-              {/* Setup Scramble Box */}
-              <div className="alg-setup-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div className="setup-header">
-                  <span className="box-label">Setup Scramble</span>
-                </div>
-                <div className="setup-text">{alg.setup}</div>
+              
+              {/* Custom twisty player control bar */}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px', width: '100%' }}>
+                <button 
+                  onClick={() => { if (playerRef.current) playerRef.current.timestamp = 0; }} 
+                  title="Início" 
+                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <RotateCcw size={16} />
+                </button>
+                <button 
+                  onClick={() => { if (playerRef.current && playerRef.current.timeline) playerRef.current.timeline.play({ timeDirection: -1, step: true }); }} 
+                  title="Voltar" 
+                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <SkipBack size={16} />
+                </button>
+                <button 
+                  onClick={() => { if (playerRef.current) playerRef.current.pause(); }} 
+                  title="Pausar" 
+                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Pause size={16} />
+                </button>
+                <button 
+                  onClick={() => { if (playerRef.current) playerRef.current.play(); }} 
+                  title="Play" 
+                  style={{ flex: 1.5, padding: '8px', background: 'var(--text-accent, #3b82f6)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                >
+                  <Play size={16} fill="currentColor" />
+                </button>
+                <button 
+                  onClick={() => { if (playerRef.current && playerRef.current.timeline) playerRef.current.timeline.play({ timeDirection: 1, step: true }); }} 
+                  title="Avançar" 
+                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <SkipForward size={16} />
+                </button>
               </div>
             </div>
 
-            {/* Dedicated Algorithm Timer */}
+            {/* Column 2: Algorithm Moves and Scramble info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Target Algorithm Moves */}
+              <div className="alg-target-box" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px' }}>
+                <span className="box-label">Algoritmo ({alg.moveCount} movimentos):</span>
+                <div className="alg-moves-text" style={{ fontSize: '1.2rem', margin: '8px 0', wordBreak: 'break-word' }}>{alg.moves}</div>
+              </div>
+
+              {/* Setup Scramble Box */}
+              <div className="alg-setup-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px' }}>
+                <div className="setup-header">
+                  <span className="box-label">Setup Scramble</span>
+                </div>
+                <div className="setup-text" style={{ wordBreak: 'break-word' }}>{alg.setup}</div>
+              </div>
+            </div>
+
+            {/* Column 3: Dedicated Algorithm Timer */}
             <div
               className="alg-timer-area"
               style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}

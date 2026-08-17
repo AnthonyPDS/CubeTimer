@@ -62,6 +62,17 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
     return list;
   }, [activeCategory, selectedGroup, searchQuery, favorites]);
 
+  if (trainingAlg) {
+    return (
+      <AlgorithmTrainerModal
+        alg={trainingAlg}
+        onClose={() => setTrainingAlg(null)}
+        solves={algSolves[trainingAlg.id] || []}
+        onSaveSolve={onSaveAlgSolve}
+      />
+    );
+  }
+
   return (
     <div className="algorithm-library-container fade-in">
       {/* Top Header & Search */}
@@ -176,15 +187,6 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
         </div>
       )}
 
-      {/* Dedicated Algorithm Speed Trainer Modal */}
-      {trainingAlg && (
-        <AlgorithmTrainerModal
-          alg={trainingAlg}
-          onClose={() => setTrainingAlg(null)}
-          solves={algSolves[trainingAlg.id] || []}
-          onSaveSolve={onSaveAlgSolve}
-        />
-      )}
     </div>
   );
 };
