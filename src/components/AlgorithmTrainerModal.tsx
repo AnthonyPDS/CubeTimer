@@ -222,7 +222,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content alg-trainer-modal" style={{ maxWidth: '820px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content alg-trainer-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="title-group">
             <Zap size={20} className="text-accent" />
@@ -234,10 +234,10 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
         </div>
 
         <div className="modal-body">
-          <div style={{ display: 'grid', gridTemplateColumns: '300px 1.2fr 1fr', gap: '24px', marginBottom: '16px' }}>
+          <div className="trainer-main-layout">
             {/* Column 1: 3D Cube Player & Controls */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: '300px', height: '300px', background: '#121214', borderRadius: '12px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid var(--border-color)' }}>
+            <div className="trainer-cube-column">
+              <div className="trainer-cube-box">
                 {React.createElement('twisty-player', {
                   ref: playerRef,
                   style: { width: '100%', height: '100%' }
@@ -245,7 +245,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
               </div>
               
               {/* Custom twisty player control bar */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px', width: '100%' }}>
+              <div className="trainer-cube-controls">
                 <button 
                   onClick={() => { 
                     if (playerRef.current) {
@@ -257,7 +257,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
                     }
                   }} 
                   title="Início" 
-                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="trainer-cube-ctrl-btn"
                 >
                   <RotateCcw size={16} />
                 </button>
@@ -268,21 +268,21 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
                     }
                   }} 
                   title="Voltar" 
-                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="trainer-cube-ctrl-btn"
                 >
                   <SkipBack size={16} />
                 </button>
                 <button 
                   onClick={() => { if (playerRef.current) playerRef.current.pause(); }} 
                   title="Pausar" 
-                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="trainer-cube-ctrl-btn"
                 >
                   <Pause size={16} />
                 </button>
                 <button 
                   onClick={() => { if (playerRef.current) playerRef.current.play(); }} 
                   title="Play" 
-                  style={{ flex: 1.5, padding: '8px', background: 'var(--text-accent, #3b82f6)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                  className="trainer-cube-play-btn"
                 >
                   <Play size={16} fill="currentColor" />
                 </button>
@@ -293,7 +293,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
                     }
                   }} 
                   title="Avançar" 
-                  style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  className="trainer-cube-ctrl-btn"
                 >
                   <SkipForward size={16} />
                 </button>
@@ -301,26 +301,25 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
             </div>
 
             {/* Column 2: Algorithm Moves and Scramble info */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="trainer-info-column">
               {/* Target Algorithm Moves */}
-              <div className="alg-target-box" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px' }}>
+              <div className="alg-target-box">
                 <span className="box-label">Algoritmo ({alg.moveCount} movimentos):</span>
-                <div className="alg-moves-text" style={{ fontSize: '1.2rem', margin: '8px 0', wordBreak: 'break-word' }}>{alg.moves}</div>
+                <div className="alg-moves-text">{alg.moves}</div>
               </div>
 
               {/* Setup Scramble Box */}
-              <div className="alg-setup-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px' }}>
+              <div className="alg-setup-box">
                 <div className="setup-header">
                   <span className="box-label">Setup Scramble</span>
                 </div>
-                <div className="setup-text" style={{ wordBreak: 'break-word' }}>{alg.setup}</div>
+                <div className="setup-text">{alg.setup}</div>
               </div>
             </div>
 
             {/* Column 3: Dedicated Algorithm Timer */}
             <div
               className="alg-timer-area"
-              style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
               onClick={() => {
                 if (timerStateRef.current === 'running') {
                   stopTimer();
@@ -333,7 +332,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
           </div>
 
           {/* Performance Stats */}
-          <div className="alg-stats-row" style={{ marginTop: '0', paddingTop: '0', border: 'none', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+          <div className="trainer-stats-5col">
             <div className="alg-stat-card highlight">
               <span className="label">PB</span>
               <span className="value text-green">{formatTime(pb)}</span>
@@ -356,7 +355,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px' }}>
+          <div className="trainer-stats-2col">
              <div className="alg-stat-card">
                <span className="label">Último Tempo</span>
                <span className="value">{formatTime(lastTime)}</span>
