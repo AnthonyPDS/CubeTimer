@@ -128,12 +128,12 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
           <Download size={14} /> Exportar
         </button>
 
-        {/* Import JSON */}
-        <label className="btn-secondary-sm cursor-pointer" title="Importar arquivo JSON de resoluções">
+        {/* Import JSON / TXT */}
+        <label className="btn-secondary-sm cursor-pointer" title="Importar arquivo JSON ou TXT (csTimer / CubeTimer)">
           <Upload size={14} /> Importar
           <input
             type="file"
-            accept=".json"
+            accept=".json,.txt,text/plain,application/json,*"
             onChange={onImportData}
             style={{ display: 'none' }}
           />

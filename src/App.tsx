@@ -186,37 +186,194 @@ export const App: React.FC = () => {
     );
   };
 
-  // Export JSON
+  // Helper to parse csTimer backup format
+  const parseCsTimerBackup = (data: any): { sessions: Session[], solves: Solve[] } | null => {
+    const hasProperties = 'properties' in data;
+    const sessionKeys = Object.keys(data).filter(k => /^session\d+$/.test(k));
+    if (!hasProperties && sessionKeys.length === 0) {
+      return null;
+    }
+
+    const parsedSessions: Session[] = [];
+    const parsedSolves: Solve[] = [];
+
+    let sessionMetadata: Record<string, any> = {};
+    if (data.properties && typeof data.properties.sessionData === 'string') {
+      try {
+        sessionMetadata = JSON.parse(data.properties.sessionData);
+      } catch (e) {
+        console.error("Erro ao ler sessionData do csTimer", e);
+      }
+    }
+
+    const sortedKeys = sessionKeys.sort((a, b) => {
+      const numA = parseInt(a.replace('session', ''), 10);
+      const numB = parseInt(b.replace('session', ''), 10);
+      return numA - numB;
+    });
+
+    sortedKeys.forEach((key) => {
+      const sessionIdx = key.replace('session', '');
+      const meta = sessionMetadata[sessionIdx] || {};
+      const sessionName = meta.name || `Sessão ${sessionIdx}`;
+      
+      const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      
+      parsedSessions.push({
+        id: sessionId,
+        name: String(sessionName),
+        createdAt: Date.now()
+      });
+
+      const rawSolves = data[key];
+      if (Array.isArray(rawSolves)) {
+        rawSolves.forEach((solveArr) => {
+          if (!Array.isArray(solveArr) || solveArr.length < 4) return;
+          
+          const innerVal = solveArr[0];
+          const scramble = solveArr[1];
+          const notes = solveArr[2];
+          const timestampSec = solveArr[3];
+
+          if (!Array.isArray(innerVal) || innerVal.length < 2) return;
+          const penaltyCode = innerVal[0];
+          const timeMs = innerVal[1];
+
+          let penalty: 'none' | '+2' | 'dnf' = 'none';
+          if (penaltyCode === 2000 || penaltyCode === 2) {
+            penalty = '+2';
+          } else if (penaltyCode === -1) {
+            penalty = 'dnf';
+          }
+
+          let rawTime = timeMs;
+          if (penalty === '+2') {
+            rawTime = Math.max(0, timeMs - 2000);
+          }
+
+          parsedSolves.push({
+            id: 'solve_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            time: timeMs,
+            rawTime: rawTime,
+            scramble: String(scramble || ''),
+            timestamp: (Number(timestampSec) || Math.floor(Date.now() / 1000)) * 1000,
+            penalty: penalty,
+            sessionId: sessionId,
+            notes: notes ? String(notes) : undefined
+          });
+        });
+      }
+    });
+
+    return { sessions: parsedSessions, solves: parsedSolves };
+  };
+
+  // Export JSON in csTimer format
   const handleExportData = () => {
-    const dataStr = JSON.stringify({ sessions, solves }, null, 2);
+    const backup: Record<string, any> = {};
+    const sessionDataObj: Record<string, any> = {};
+
+    sessions.forEach((session, index) => {
+      const sessionKey = `session${index + 1}`;
+      const sessionSolves = solves.filter(s => s.sessionId === session.id);
+      
+      const formattedSolves = sessionSolves.map(s => {
+        let penaltyCode = 0;
+        if (s.penalty === '+2') penaltyCode = 2000;
+        else if (s.penalty === 'dnf') penaltyCode = -1;
+
+        return [
+          [penaltyCode, s.time],
+          s.scramble,
+          s.notes || "",
+          Math.floor(s.timestamp / 1000)
+        ];
+      });
+
+      backup[sessionKey] = formattedSolves;
+
+      sessionDataObj[String(index + 1)] = {
+        name: session.name,
+        opt: {},
+        rank: index + 1,
+        stat: [formattedSolves.length, 0, 0],
+        date: formattedSolves.length > 0 
+          ? [formattedSolves[0][3], formattedSolves[formattedSolves.length - 1][3]] 
+          : [Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000)]
+      };
+    });
+
+    backup["properties"] = {
+      sessionData: JSON.stringify(sessionDataObj),
+      sessionN: sessions.length,
+      scrHide: true,
+      tools: true,
+      toolsfunc: "[\"trend\",\"stats\",\"cross\",\"distribution\"]"
+    };
+
+    const dataStr = JSON.stringify(backup, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `cubetimer_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `cstimer_backup_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
-  // Import JSON
+  // Import JSON / TXT (supports csTimer format and old CubeTimer format)
   const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!window.confirm('Atenção: A importação irá substituir todos os tempos e sessões atuais por completo. Deseja prosseguir?')) {
+      e.target.value = ''; // Clear file input
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result as string);
+        let jsonText = (event.target?.result as string) || '';
+        // Remove possible UTF-8 BOM
+        if (jsonText.charCodeAt(0) === 0xFEFF) {
+          jsonText = jsonText.slice(1);
+        }
+        
+        let data = JSON.parse(jsonText);
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (_) {}
+        }
+        
+        // 1. Try parsing as csTimer format
+        const csTimerParsed = parseCsTimerBackup(data);
+        if (csTimerParsed) {
+          if (csTimerParsed.sessions.length > 0) {
+            setSessions(csTimerParsed.sessions);
+            setSolves(csTimerParsed.solves);
+            setActiveSessionId(csTimerParsed.sessions[0].id);
+            alert(`Sucesso! ${csTimerParsed.sessions.length} sessões e ${csTimerParsed.solves.length} resoluções importadas do csTimer.`);
+          } else {
+            alert('Nenhuma sessão encontrada no arquivo do csTimer.');
+          }
+          return;
+        }
+
+        // 2. Fallback to old native format
         if (data.sessions && data.solves) {
           setSessions(data.sessions);
           setSolves(data.solves);
           if (data.sessions[0]) setActiveSessionId(data.sessions[0].id);
-          alert('Dados importados com sucesso!');
+          alert('Dados do CubeTimer importados com sucesso!');
         } else {
-          alert('Arquivo JSON inválido.');
+          alert('Arquivo inválido ou formato não reconhecido.');
         }
       } catch (err) {
-        alert('Erro ao carregar o arquivo JSON.');
+        alert('Erro ao carregar o arquivo. Certifique-se de que é um arquivo de backup válido do csTimer (.txt ou .json).');
+      } finally {
+        e.target.value = ''; // Reset input to allow selecting the same file again
       }
     };
     reader.readAsText(file);

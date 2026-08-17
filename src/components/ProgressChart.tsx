@@ -81,30 +81,36 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
       {
         label: 'Single (s)',
         data: singleData,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.08)',
-        borderWidth: 2,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56, 189, 248, 0.04)',
+        borderWidth: 1.2,
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
         fill: true,
+        order: 3, // Camada do fundo (geral)
       },
       {
         label: 'ao5 (s)',
         data: ao5Data,
-        borderColor: '#10b981',
+        borderColor: '#f43f5e', // Rosa / Coral Vibrante
         backgroundColor: 'transparent',
         borderWidth: 2.5,
         tension: 0.3,
-        pointRadius: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        order: 2, // Por cima do geral, abaixo do ao12
       },
       {
         label: 'ao12 (s)',
         data: ao12Data,
-        borderColor: '#f59e0b',
+        borderColor: '#eab308', // Amarelo Dourado
         backgroundColor: 'transparent',
         borderWidth: 2.5,
         tension: 0.3,
-        pointRadius: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        order: 1, // Na frente de todos (topo)
       },
     ];
   } else if (activeTab === 'cfop-all') {
@@ -115,7 +121,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         borderColor: '#3b82f6',
         borderWidth: 2,
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
       },
       {
         label: 'F2L (s)',
@@ -123,7 +130,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         borderColor: '#10b981',
         borderWidth: 2,
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
       },
       {
         label: 'OLL (s)',
@@ -131,7 +139,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         borderColor: '#f59e0b',
         borderWidth: 2,
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
       },
       {
         label: 'PLL (s)',
@@ -139,7 +148,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         borderColor: '#ef4444',
         borderWidth: 2,
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
       },
     ];
   } else if (activeTab === 'cross') {
@@ -151,7 +161,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         backgroundColor: 'rgba(59, 130, 246, 0.12)',
         borderWidth: 2.5,
         tension: 0.2,
-        pointRadius: 4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
         fill: true,
       },
     ];
@@ -164,7 +175,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         backgroundColor: 'rgba(16, 185, 129, 0.12)',
         borderWidth: 2.5,
         tension: 0.2,
-        pointRadius: 4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
         fill: true,
       },
     ];
@@ -177,7 +189,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         backgroundColor: 'rgba(245, 158, 11, 0.12)',
         borderWidth: 2.5,
         tension: 0.2,
-        pointRadius: 4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
         fill: true,
       },
     ];
@@ -190,7 +203,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
         backgroundColor: 'rgba(239, 68, 68, 0.12)',
         borderWidth: 2.5,
         tension: 0.2,
-        pointRadius: 4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
         fill: true,
       },
     ];
@@ -226,6 +240,13 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ solves }) => {
             return `${context.dataset.label}: ${val.toFixed(2)}s`;
           },
         },
+      },
+    },
+    elements: {
+      point: {
+        radius: 0,
+        hoverRadius: 5,
+        hitRadius: 8,
       },
     },
     scales: {
