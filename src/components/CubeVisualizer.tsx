@@ -23,6 +23,9 @@ export const CubeVisualizer: React.FC<CubeVisualizerProps> = ({ moves, category 
       } else if (category === 'PLL') {
         view = 'plan';
         mask = 'll';
+      } else if (category === 'F2L') {
+        view = 'trans';
+        mask = 'f2l';
       }
 
       // For visual cube generation, usually we want to see the case, so we apply the case string.

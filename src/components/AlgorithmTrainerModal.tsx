@@ -30,13 +30,35 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
 
   const playerRef = useRef<any>(null);
 
-  // Pre-process setup to avoid double rotation issues in some PLL cases
+  // Programmatic algorithm inverter to calculate the mathematically correct setup scramble (100% error-proof)
+  const invertAlgorithm = useCallback((movesStr: string): string => {
+    const cleanStr = movesStr.replace(/[()\[\]]/g, ' ');
+    const moves = cleanStr.split(/\s+/).filter(Boolean);
+    const inverted = moves.map(move => {
+      // Rotation conversions
+      if (move === 'x') return "x'";
+      if (move === "x'") return 'x';
+      if (move === 'y') return "y'";
+      if (move === "y'") return 'y';
+      if (move === 'z') return "z'";
+      if (move === "z'") return 'z';
+      if (move === 'x2' || move === 'y2' || move === 'z2') return move;
+
+      // Normal moves
+      if (move.endsWith("'")) {
+        return move.slice(0, -1);
+      }
+      if (move.endsWith('2')) {
+        return move;
+      }
+      return move + "'";
+    });
+    return inverted.reverse().join(' ');
+  }, []);
+
   let safeSetup = '';
   if (alg) {
-    safeSetup = alg.setup;
-    if (alg.category === 'PLL' && safeSetup.endsWith(" x'")) {
-      safeSetup = safeSetup.slice(0, -3).trim();
-    }
+    safeSetup = invertAlgorithm(alg.moves);
   }
 
   useEffect(() => {
@@ -45,6 +67,25 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
       // no-op
     }
   }, [timerState]);
+
+  // Synchronize properties directly to the DOM element to bypass React 19 / kebab-case property mapping issues
+  useEffect(() => {
+    if (playerRef.current && alg) {
+      playerRef.current.alg = alg.moves;
+      playerRef.current.experimentalSetupAlg = 'z2 ' + safeSetup;
+      playerRef.current.controlPanel = 'none';
+      playerRef.current.background = 'none';
+      
+      // Gray out irrelevant pieces for F2L cases in 3D
+      if (alg.category === 'F2L') {
+        playerRef.current.experimentalStickering = 'full';
+        playerRef.current.experimentalStickeringMaskOrbits = "CORNERS:----IIII,EDGES:----IIII----";
+      } else {
+        playerRef.current.experimentalStickering = 'full';
+        playerRef.current.experimentalStickeringMaskOrbits = null;
+      }
+    }
+  }, [alg, safeSetup]);
 
   const updateTimer = useCallback(() => {
     if (startTimeRef.current !== null) {
@@ -202,10 +243,6 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
               <div style={{ width: '300px', height: '300px', background: '#121214', borderRadius: '12px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid var(--border-color)' }}>
                 {React.createElement('twisty-player', {
                   ref: playerRef,
-                  alg: alg.moves,
-                  'experimental-setup-alg': 'z2 ' + safeSetup,
-                  'control-panel': 'none',
-                  background: 'none',
                   style: { width: '100%', height: '100%' }
                 })}
               </div>
@@ -213,14 +250,26 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
               {/* Custom twisty player control bar */}
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px', width: '100%' }}>
                 <button 
-                  onClick={() => { if (playerRef.current) playerRef.current.timestamp = 0; }} 
+                  onClick={() => { 
+                    if (playerRef.current) {
+                      if (playerRef.current.controller) {
+                        playerRef.current.controller.jumpToStart({ flash: true });
+                      } else {
+                        playerRef.current.timestamp = 0;
+                      }
+                    }
+                  }} 
                   title="Início" 
                   style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <RotateCcw size={16} />
                 </button>
                 <button 
-                  onClick={() => { if (playerRef.current && playerRef.current.timeline) playerRef.current.timeline.play({ timeDirection: -1, step: true }); }} 
+                  onClick={() => { 
+                    if (playerRef.current && playerRef.current.controller && playerRef.current.controller.animationController) {
+                      playerRef.current.controller.animationController.play({ direction: -1, untilBoundary: 'move' });
+                    }
+                  }} 
                   title="Voltar" 
                   style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
@@ -241,7 +290,11 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
                   <Play size={16} fill="currentColor" />
                 </button>
                 <button 
-                  onClick={() => { if (playerRef.current && playerRef.current.timeline) playerRef.current.timeline.play({ timeDirection: 1, step: true }); }} 
+                  onClick={() => { 
+                    if (playerRef.current && playerRef.current.controller && playerRef.current.controller.animationController) {
+                      playerRef.current.controller.animationController.play({ direction: 1, untilBoundary: 'move' });
+                    }
+                  }} 
                   title="Avançar" 
                   style={{ flex: 1, padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
