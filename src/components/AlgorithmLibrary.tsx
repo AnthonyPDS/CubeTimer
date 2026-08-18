@@ -16,6 +16,7 @@ interface AlgorithmLibraryProps {
   onToggleFavorite: (algId: string) => void;
   algSolves: Record<string, number[]>;
   onSaveAlgSolve: (algId: string, timeMs: number) => void;
+  onDeleteAlgSolve: (algId: string, solveIndex: number) => void;
 }
 
 export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
@@ -23,6 +24,7 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
   onToggleFavorite,
   algSolves,
   onSaveAlgSolve,
+  onDeleteAlgSolve,
 }) => {
   const [activeCategory, setActiveCategory] = useState<CfopCategory | 'FAVORITES'>('PLL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +83,7 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
         onClose={() => setTrainingAlg(null)}
         solves={algSolves[trainingAlg.id] || []}
         onSaveSolve={onSaveAlgSolve}
+        onDeleteSolve={onDeleteAlgSolve}
       />
     );
   }

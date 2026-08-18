@@ -409,18 +409,20 @@ export const App: React.FC = () => {
           <h1 className="app-title desktop-only">CubeTimer</h1>
 
           {/* Mode Switch (Resolução vs Opções/Gerenciamento) */}
-          <div className="solve-mode-lever-container mobile-only">
-            <button
-              onClick={() => setIsSolveMode(!isSolveMode)}
-              className={`solve-mode-pill ${isSolveMode ? 'mode-solve' : 'mode-manage'}`}
-              title={isSolveMode ? "Modo Resolução Ativo" : "Modo Opções Ativo"}
-            >
-              <span className="lever-indicator" />
-              <span className="lever-text">
-                {isSolveMode ? 'Resolução' : 'Opções'}
-              </span>
-            </button>
-          </div>
+          {activeTab === 'timer' && (
+            <div className="solve-mode-lever-container mobile-only fade-in">
+              <button
+                onClick={() => setIsSolveMode(!isSolveMode)}
+                className={`solve-mode-pill ${isSolveMode ? 'mode-solve' : 'mode-manage'}`}
+                title={isSolveMode ? "Modo Resolução Ativo" : "Modo Opções Ativo"}
+              >
+                <span className="lever-indicator" />
+                <span className="lever-text">
+                  {isSolveMode ? 'Resolução' : 'Opções'}
+                </span>
+              </button>
+            </div>
+          )}
 
           <nav className="header-tabs desktop-only" style={{ marginLeft: 'auto' }}>
             <button
@@ -485,7 +487,7 @@ export const App: React.FC = () => {
             <div className={`stats-section ${activeTab === 'stats' ? 'mobile-active' : 'mobile-hidden'}`}>
               
               {/* Optional Session Selector duplicate for mobile stats view so user can switch sessions without going back to timer */}
-              <div className="mobile-only session-selector-mobile-wrapper" style={{ marginBottom: '16px' }}>
+              <div className="mobile-only fade-in session-bar-wrapper" style={{ marginBottom: '8px' }}>
                 <SessionSelector
                   sessions={sessions}
                   activeSessionId={activeSessionId}
@@ -533,6 +535,16 @@ export const App: React.FC = () => {
                 const current = prev[algId] || [];
                 return { ...prev, [algId]: [timeMs, ...current] };
               });
+            }}
+            onDeleteAlgSolve={(algId: string, solveIndex: number) => {
+              if (window.confirm('Excluir esta resolução do histórico?')) {
+                setAlgSolves(prev => {
+                  const current = prev[algId] || [];
+                  const newSolves = [...current];
+                  newSolves.splice(solveIndex, 1);
+                  return { ...prev, [algId]: newSolves };
+                });
+              }
             }}
           />
         )}

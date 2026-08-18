@@ -1411,6 +1411,8 @@ body {
   padding: 16px;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
   text-align: center;
   min-height: 140px;
 }
@@ -1677,6 +1679,10 @@ body {
     flex-direction: column;
     justify-content: space-evenly;
     gap: 6px;
+  }
+
+  .stats-section {
+    padding-bottom: 90px;
   }
 
   .timer-tab-active .timer-container {

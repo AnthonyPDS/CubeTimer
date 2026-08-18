@@ -11,6 +11,7 @@ interface AlgorithmTrainerModalProps {
   onClose: () => void;
   solves: number[];
   onSaveSolve: (algId: string, timeMs: number) => void;
+  onDeleteSolve: (algId: string, solveIndex: number) => void;
 }
 
 export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
@@ -22,6 +23,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [lastTime, setLastTime] = useState<number | null>(null);
+  const [isTrainerSolveMode, setIsTrainerSolveMode] = useState(false);
 
   const startTimeRef = useRef<number | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -182,6 +184,54 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
     };
   }, [alg, startTimer, stopTimer]);
 
+  // Touch Handlers for Mobile Timer
+  const handleTouchStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent default to avoid selection/scrolling, but ONLY if it's a touch event to avoid breaking clicks
+    if (e.type === 'touchstart' && e.cancelable) e.preventDefault(); 
+    
+    const state = timerStateRef.current;
+    if (state === 'running') {
+      stopTimer();
+      return;
+    }
+    if (state === 'idle') {
+      setTimerState('holding');
+      if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = window.setTimeout(() => {
+        setTimerState('ready');
+      }, 300);
+    }
+  }, [stopTimer]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (e.type === 'touchend' && e.cancelable) e.preventDefault();
+    
+    const state = timerStateRef.current;
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    if (state === 'ready') {
+      startTimer();
+    } else if (state === 'holding') {
+      setTimerState('idle');
+    }
+  }, [startTimer]);
+
+  // Long-press deletion logic
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const startLongPress = (idx: number) => {
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      onDeleteSolve(alg.id, idx);
+    }, 600); // 600ms hold
+  };
+  const cancelLongPress = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
   if (!alg) return null;
 
   // Calculate TPS (Turns Per Second)
@@ -222,12 +272,25 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content alg-trainer-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content alg-trainer-modal ${isTrainerSolveMode ? 'solve-mode-active' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="title-group">
+          <div className="title-group" style={{ flex: 1 }}>
             <Zap size={20} className="text-accent" />
-            <h3>Treinador de Velocidade: {alg.name}</h3>
+            <h3 style={{ fontSize: '1rem' }}>Treinador: {alg.name}</h3>
           </div>
+
+          <div className="solve-mode-lever-container mobile-only" style={{ marginRight: '12px' }}>
+            <button
+              onClick={() => setIsTrainerSolveMode(!isTrainerSolveMode)}
+              className={`solve-mode-pill ${isTrainerSolveMode ? 'mode-solve' : 'mode-manage'}`}
+              title="Alternar Modo Foco"
+              style={{ padding: '4px 10px' }}
+            >
+              <span className="lever-indicator" />
+              <span className="lever-text">Foco</span>
+            </button>
+          </div>
+
           <button onClick={onClose} className="icon-button">
             <X size={18} />
           </button>
@@ -320,68 +383,88 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
             {/* Column 3: Dedicated Algorithm Timer */}
             <div
               className="alg-timer-area"
-              onClick={() => {
-                if (timerStateRef.current === 'running') {
-                  stopTimer();
-                }
-              }}
+              onMouseDown={handleTouchStart}
+              onMouseUp={handleTouchEnd}
+              onMouseLeave={handleTouchEnd}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
             >
               <div className={timerClass}>{formatTime(elapsedTime)}</div>
               <div className="alg-timer-instruction">{instruction}</div>
             </div>
           </div>
 
-          {/* Performance Stats */}
-          <div className="trainer-stats-5col">
-            <div className="alg-stat-card highlight">
-              <span className="label">PB</span>
-              <span className="value text-green">{formatTime(pb)}</span>
-            </div>
-            <div className="alg-stat-card">
-              <span className="label">md3</span>
-              <span className="value">{formatTime(md3)}</span>
-            </div>
-            <div className="alg-stat-card">
-              <span className="label">md5</span>
-              <span className="value">{formatTime(md5)}</span>
-            </div>
-            <div className="alg-stat-card">
-              <span className="label">md12</span>
-              <span className="value">{formatTime(md12)}</span>
-            </div>
-            <div className="alg-stat-card">
-              <span className="label">md100</span>
-              <span className="value">{formatTime(md100)}</span>
-            </div>
           </div>
 
-          <div className="trainer-stats-2col">
-             <div className="alg-stat-card">
-               <span className="label">Último Tempo</span>
-               <span className="value">{formatTime(lastTime)}</span>
-             </div>
-             <div className="alg-stat-card text-right">
-               <span className="label">Velocidade (TPS)</span>
-               <span className="value text-accent">{currentTps ? `${currentTps} TPS` : '-'}</span>
-             </div>
-          </div>
+          {/* Performance Stats & History (Hidden in Solve Mode) */}
+          {!isTrainerSolveMode && (
+            <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="trainer-stats-5col">
+                <div className="alg-stat-card highlight">
+                  <span className="label">PB</span>
+                  <span className="value text-green">{formatTime(pb)}</span>
+                </div>
+                <div className="alg-stat-card">
+                  <span className="label">md3</span>
+                  <span className="value">{formatTime(md3)}</span>
+                </div>
+                <div className="alg-stat-card">
+                  <span className="label">md5</span>
+                  <span className="value">{formatTime(md5)}</span>
+                </div>
+                <div className="alg-stat-card">
+                  <span className="label">md12</span>
+                  <span className="value">{formatTime(md12)}</span>
+                </div>
+                <div className="alg-stat-card">
+                  <span className="label">md100</span>
+                  <span className="value">{formatTime(md100)}</span>
+                </div>
+              </div>
 
-          {/* History */}
-          <div className="trainer-history">
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px', paddingLeft: '4px' }}>Histórico ({solves.length} soluções)</h4>
-            <div className="trainer-history-list">
-              {solves.map((time, idx) => {
-                const solveTps = (alg.moveCount / (time / 1000)).toFixed(1);
-                return (
-                  <div key={idx} className="trainer-history-item">
-                    <span>{solves.length - idx}.</span>
-                    <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600 }}>{formatTime(time)}</span>
-                    <span className="tps">{solveTps} TPS</span>
-                  </div>
-                );
-              })}
+              <div className="trainer-stats-2col">
+                 <div className="alg-stat-card">
+                   <span className="label">Último Tempo</span>
+                   <span className="value">{formatTime(lastTime)}</span>
+                 </div>
+                 <div className="alg-stat-card text-right">
+                   <span className="label">Velocidade (TPS)</span>
+                   <span className="value text-accent">{currentTps ? `${currentTps} TPS` : '-'}</span>
+                 </div>
+              </div>
+
+              {/* History */}
+              <div className="trainer-history">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '0 4px' }}>
+                  <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Histórico ({solves.length} soluções)</h4>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Segure no tempo para excluir</span>
+                </div>
+                <div className="trainer-history-list">
+                  {solves.map((time, idx) => {
+                    const solveTps = (alg.moveCount / (time / 1000)).toFixed(1);
+                    return (
+                      <div 
+                        key={idx} 
+                        className="trainer-history-item"
+                        style={{ cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}
+                        onTouchStart={() => startLongPress(idx)}
+                        onTouchEnd={cancelLongPress}
+                        onTouchMove={cancelLongPress}
+                        onMouseDown={() => startLongPress(idx)}
+                        onMouseUp={cancelLongPress}
+                        onMouseLeave={cancelLongPress}
+                      >
+                        <span>{solves.length - idx}.</span>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600 }}>{formatTime(time)}</span>
+                        <span className="tps">{solveTps} TPS</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
