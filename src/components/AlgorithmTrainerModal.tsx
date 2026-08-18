@@ -395,8 +395,6 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
             </div>
           </div>
 
-          </div>
-
           {/* Performance Stats & History (Hidden in Solve Mode) */}
           {!isTrainerSolveMode && (
             <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
