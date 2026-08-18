@@ -77,6 +77,28 @@ body {
   gap: 24px;
 }
 
+/* Mobile App Layout Classes */
+.desktop-only { display: flex; }
+.mobile-only { display: none; }
+.mobile-hidden { display: block; }
+.mobile-active { display: block; }
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -1441,6 +1463,52 @@ body {
   .app-container {
     padding: 12px;
     gap: 16px;
+    padding-bottom: 80px; /* Space for bottom nav */
+  }
+
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex; }
+  .mobile-hidden { display: none !important; }
+  .mobile-active { display: flex !important; }
+
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(18, 21, 30, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-color);
+    padding: 8px 16px;
+    justify-content: space-around;
+    z-index: 100;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-nav-item {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .bottom-nav-item.active {
+    color: var(--accent-color);
+  }
+
+  .bottom-nav-item.active svg {
+    filter: drop-shadow(0 0 8px var(--accent-glow));
   }
 
   .app-header {
@@ -1450,13 +1518,13 @@ body {
   }
 
   .logo-group {
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
+    padding-bottom: 8px;
   }
 
   .header-tabs {
-    width: 100%;
-    margin-left: 0 !important;
+    display: none;
   }
 
   .header-tabs .tab-btn {

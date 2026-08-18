@@ -10,7 +10,7 @@ import { AlgorithmLibrary } from './components/AlgorithmLibrary';
 import type { Solve, Session, CubeState, SolveSplits } from './types';
 import { generateScramble, getCubeStateFromScramble, getInitialCubeState } from './utils/scrambleGenerator';
 import { calculateStats } from './utils/statsCalculator';
-import { Box, Timer as TimerIcon, BookOpen } from 'lucide-react';
+import { Box, Timer as TimerIcon, BookOpen, BarChart2 } from 'lucide-react';
 
 const SESSIONS_KEY = 'cubetimer_sessions_v1';
 const SOLVES_KEY = 'cubetimer_solves_v1';
@@ -44,7 +44,7 @@ export const App: React.FC = () => {
   const [cfopModeEnabled, setCfopModeEnabled] = useState<boolean>(false);
 
   // App Navigation State
-  const [activeTab, setActiveTab] = useState<'timer' | 'algorithms'>('timer');
+  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'algorithms'>('timer');
 
   // Algorithm Library State
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -391,13 +391,13 @@ export const App: React.FC = () => {
             <h1 className="app-title">CubeTimer Minimal</h1>
             <span className="subtitle">Speedcubing Timer & WCA Stats</span>
           </div>
-          <nav className="header-tabs" style={{ marginLeft: '20px' }}>
+          <nav className="header-tabs desktop-only" style={{ marginLeft: '20px' }}>
             <button
-              className={`tab-btn ${activeTab === 'timer' ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === 'timer' || activeTab === 'stats' ? 'active' : ''}`}
               onClick={() => setActiveTab('timer')}
             >
               <TimerIcon size={18} />
-              <span>Cronômetro</span>
+              <span>Cronômetro & Estatísticas</span>
             </button>
             <button
               className={`tab-btn ${activeTab === 'algorithms' ? 'active' : ''}`}
@@ -410,74 +410,112 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {activeTab === 'timer' ? (
-        <>
-          {/* Session selector & Toolbar */}
-      <SessionSelector
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId}
-        onCreateSession={handleCreateSession}
-        onRenameSession={handleRenameSession}
-        onExportData={handleExportData}
-        onImportData={handleImportData}
-        inspectionEnabled={inspectionEnabled}
-        onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
-        cfopModeEnabled={cfopModeEnabled}
-        onToggleCfopMode={() => setCfopModeEnabled(!cfopModeEnabled)}
-      />
+      {/* Main Content Area */}
+      <div className="app-content">
+        {(activeTab === 'timer' || activeTab === 'stats') ? (
+          <div className="dashboard-layout">
+            
+            {/* TIMER VIEW (Shown on desktop always, on mobile only if 'timer' tab) */}
+            <div className={`timer-section ${activeTab === 'timer' ? 'mobile-active' : 'mobile-hidden'}`}>
+              <SessionSelector
+                sessions={sessions}
+                activeSessionId={activeSessionId}
+                onSelectSession={setActiveSessionId}
+                onCreateSession={handleCreateSession}
+                onRenameSession={handleRenameSession}
+                onExportData={handleExportData}
+                onImportData={handleImportData}
+                inspectionEnabled={inspectionEnabled}
+                onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
+                cfopModeEnabled={cfopModeEnabled}
+                onToggleCfopMode={() => setCfopModeEnabled(!cfopModeEnabled)}
+              />
 
-      {/* Scramble Display & 2D Preview */}
-      <ScrambleDisplay
-        scramble={currentScramble}
-        cubeState={cubeState}
-        onNewScramble={newScramble}
-      />
+              <ScrambleDisplay
+                scramble={currentScramble}
+                cubeState={cubeState}
+                onNewScramble={newScramble}
+              />
 
-      {/* Main Digital Timer */}
-      <Timer
-        onSolveComplete={handleSolveComplete}
-        inspectionEnabled={inspectionEnabled}
-        cfopModeEnabled={cfopModeEnabled}
-      />
+              <Timer
+                onSolveComplete={handleSolveComplete}
+                inspectionEnabled={inspectionEnabled}
+                cfopModeEnabled={cfopModeEnabled}
+              />
+            </div>
 
-      {/* Statistics & Solves Dashboard */}
-      <div className="dashboard-grid">
-        {/* Left Column: Stats */}
-        <div className="sidebar-column">
-          <StatsPanel stats={stats} solves={activeSolves} />
-        </div>
+            {/* STATS VIEW (Shown on desktop always, on mobile only if 'stats' tab) */}
+            <div className={`stats-section ${activeTab === 'stats' ? 'mobile-active' : 'mobile-hidden'}`}>
+              
+              {/* Optional Session Selector duplicate for mobile stats view so user can switch sessions without going back to timer */}
+              <div className="mobile-only session-selector-mobile-wrapper" style={{ marginBottom: '16px' }}>
+                <SessionSelector
+                  sessions={sessions}
+                  activeSessionId={activeSessionId}
+                  onSelectSession={setActiveSessionId}
+                  onCreateSession={handleCreateSession}
+                  onRenameSession={handleRenameSession}
+                  onExportData={handleExportData}
+                  onImportData={handleImportData}
+                  inspectionEnabled={inspectionEnabled}
+                  onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
+                  cfopModeEnabled={cfopModeEnabled}
+                  onToggleCfopMode={() => setCfopModeEnabled(!cfopModeEnabled)}
+                />
+              </div>
 
-        {/* Right Column: Solves List & Progress Chart */}
-        <div className="main-column">
-          <SolvesHistory
-            solves={activeSolves}
-            onTogglePenalty={handleTogglePenalty}
-            onDeleteSolve={handleDeleteSolve}
-            onClearSolves={handleClearSolves}
-            bestSingleTime={stats.bestSingle}
+              <div className="dashboard-grid">
+                <div className="sidebar-column">
+                  <StatsPanel stats={stats} solves={activeSolves} />
+                </div>
+                <div className="main-column">
+                  <SolvesHistory
+                    solves={activeSolves}
+                    onTogglePenalty={handleTogglePenalty}
+                    onDeleteSolve={handleDeleteSolve}
+                    onClearSolves={handleClearSolves}
+                    bestSingleTime={stats.bestSingle}
+                  />
+                  <ProgressChart solves={activeSolves} />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          <AlgorithmLibrary
+            favorites={favorites}
+            onToggleFavorite={(algId) => {
+              setFavorites(prev => 
+                prev.includes(algId) ? prev.filter(id => id !== algId) : [...prev, algId]
+              );
+            }}
+            algSolves={algSolves}
+            onSaveAlgSolve={(algId: string, timeMs: number) => {
+              setAlgSolves(prev => {
+                const current = prev[algId] || [];
+                return { ...prev, [algId]: [timeMs, ...current] };
+              });
+            }}
           />
-          <ProgressChart solves={activeSolves} />
-        </div>
+        )}
       </div>
-        </>
-      ) : (
-        <AlgorithmLibrary
-          favorites={favorites}
-          onToggleFavorite={(algId) => {
-            setFavorites(prev => 
-              prev.includes(algId) ? prev.filter(id => id !== algId) : [...prev, algId]
-            );
-          }}
-          algSolves={algSolves}
-          onSaveAlgSolve={(algId: string, timeMs: number) => {
-            setAlgSolves(prev => {
-              const current = prev[algId] || [];
-              return { ...prev, [algId]: [timeMs, ...current] };
-            });
-          }}
-        />
-      )}
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="mobile-bottom-nav">
+        <button className={`bottom-nav-item ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
+          <TimerIcon size={22} />
+          <span>Timer</span>
+        </button>
+        <button className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+          <BarChart2 size={22} />
+          <span>Estatísticas</span>
+        </button>
+        <button className={`bottom-nav-item ${activeTab === 'algorithms' ? 'active' : ''}`} onClick={() => setActiveTab('algorithms')}>
+          <BookOpen size={22} />
+          <span>Algoritmos</span>
+        </button>
+      </nav>
     </div>
   );
 };
