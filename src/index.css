@@ -181,45 +181,8 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Fullscreen No-Scroll Timer Layout */
-.timer-tab-active {
-  min-height: 100vh;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.timer-tab-active .app-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.timer-tab-active .dashboard-layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-}
-
-.timer-tab-active .timer-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  gap: 8px;
-}
-
-.timer-tab-active .timer-container {
-  flex: 1;
-  min-height: unset;
-  padding: 10px 20px;
-}
+/* Desktop timer layout is now scrollable/normal by default.
+   Fullscreen No-Scroll Timer Layout is applied via media query on mobile. */
 
 .app-title {
   font-size: 1.35rem;
@@ -1666,17 +1629,56 @@ body {
 
   .right-tools {
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    justify-content: space-between;
     gap: 8px;
   }
 
   .right-tools .toggle-button,
   .right-tools .btn-secondary-sm {
-    width: 100%;
+    flex: 1;
     justify-content: center;
+    padding: 8px;
     min-height: 38px;
-    font-size: 0.8rem;
+  }
+
+  /* Fullscreen No-Scroll Timer Layout for Mobile */
+  .timer-tab-active {
+    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timer-tab-active .app-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .timer-tab-active .dashboard-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .timer-tab-active .timer-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: 6px;
+  }
+
+  .timer-tab-active .timer-container {
+    flex: 1;
+    min-height: unset;
   }
 
   .scramble-card {

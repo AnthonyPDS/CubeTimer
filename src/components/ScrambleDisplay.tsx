@@ -17,7 +17,7 @@ export const ScrambleDisplay: React.FC<ScrambleDisplayProps> = ({
   disabled = false,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(() => window.innerWidth > 768);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(scramble);

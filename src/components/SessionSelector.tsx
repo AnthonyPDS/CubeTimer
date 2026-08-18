@@ -95,11 +95,12 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
 
         <button
           onClick={() => setShowNewModal(true)}
-          className="icon-button"
+          className="btn-secondary-sm"
           title="Nova Sessão"
           aria-label="Nova Sessão"
         >
           <Plus size={16} />
+          <span className="desktop-only">Nova</span>
         </button>
       </div>
 
@@ -107,40 +108,44 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
         {/* Toggle CFOP Splits Mode */}
         <button
           onClick={onToggleCfopMode}
-          className={`icon-button ${cfopModeEnabled ? 'active' : ''}`}
+          className={`toggle-button ${cfopModeEnabled ? 'active' : ''}`}
           title={`Etapas CFOP: ${cfopModeEnabled ? 'Ativado' : 'Desativado'}`}
           aria-label="Alternar Etapas CFOP"
         >
           <Layers size={16} />
+          <span className="desktop-only">CFOP</span>
         </button>
 
         {/* Toggle Inspection Timer */}
         <button
           onClick={onToggleInspection}
-          className={`icon-button ${inspectionEnabled ? 'active' : ''}`}
+          className={`toggle-button ${inspectionEnabled ? 'active' : ''}`}
           title={`Inspeção WCA (15s): ${inspectionEnabled ? 'Ativada' : 'Desativada'}`}
           aria-label="Alternar Inspeção WCA"
         >
           <Clock size={16} />
+          <span className="desktop-only">15s</span>
         </button>
 
         {/* Export JSON */}
         <button
           onClick={onExportData}
-          className="icon-button"
+          className="btn-secondary-sm"
           title="Exportar dados da sessão"
           aria-label="Exportar dados"
         >
           <Download size={16} />
+          <span className="desktop-only">Exportar</span>
         </button>
 
         {/* Import JSON / TXT */}
         <label
-          className="icon-button cursor-pointer"
+          className="btn-secondary-sm cursor-pointer"
           title="Importar arquivo JSON ou TXT (csTimer / CubeTimer)"
           aria-label="Importar arquivo"
         >
           <Upload size={16} />
+          <span className="desktop-only">Importar</span>
           <input
             type="file"
             accept=".json,.txt,text/plain,application/json,*"

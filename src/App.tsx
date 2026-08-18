@@ -48,6 +48,16 @@ export const App: React.FC = () => {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
+  const [isMobile, setIsMobile] = useState<boolean>(() => window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const effectivelySolveMode = !isMobile || isSolveMode;
+
   useEffect(() => {
     localStorage.setItem(SOLVE_MODE_KEY, JSON.stringify(isSolveMode));
   }, [isSolveMode]);
@@ -396,13 +406,14 @@ export const App: React.FC = () => {
           <div className="logo-icon" title="CubeTimer">
             <Box size={24} />
           </div>
+          <h1 className="app-title desktop-only">CubeTimer</h1>
 
           {/* Mode Switch (Resolução vs Opções/Gerenciamento) */}
-          <div className="solve-mode-lever-container">
+          <div className="solve-mode-lever-container mobile-only">
             <button
               onClick={() => setIsSolveMode(!isSolveMode)}
               className={`solve-mode-pill ${isSolveMode ? 'mode-solve' : 'mode-manage'}`}
-              title={isSolveMode ? "Modo Resolução Ativo (Clique para gerenciar sessões e opções)" : "Modo Opções Ativo (Clique para voltar ao modo resolução)"}
+              title={isSolveMode ? "Modo Resolução Ativo" : "Modo Opções Ativo"}
             >
               <span className="lever-indicator" />
               <span className="lever-text">
@@ -437,7 +448,7 @@ export const App: React.FC = () => {
             
             {/* TIMER VIEW (Shown on desktop always, on mobile only if 'timer' tab) */}
             <div className={`timer-section ${activeTab === 'timer' ? 'mobile-active' : 'mobile-hidden'}`}>
-              {!isSolveMode && (
+              {!effectivelySolveMode && (
                 <div className="fade-in session-bar-wrapper">
                   <SessionSelector
                     sessions={sessions}
@@ -459,14 +470,14 @@ export const App: React.FC = () => {
                 scramble={currentScramble}
                 cubeState={cubeState}
                 onNewScramble={newScramble}
-                disabled={!isSolveMode}
+                disabled={!effectivelySolveMode}
               />
 
               <Timer
                 onSolveComplete={handleSolveComplete}
                 inspectionEnabled={inspectionEnabled}
                 cfopModeEnabled={cfopModeEnabled}
-                disabled={!isSolveMode}
+                disabled={!effectivelySolveMode}
               />
             </div>
 
