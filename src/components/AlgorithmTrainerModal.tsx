@@ -19,6 +19,7 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   onClose,
   solves,
   onSaveSolve,
+  onDeleteSolve,
 }) => {
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
@@ -222,7 +223,9 @@ export const AlgorithmTrainerModal: React.FC<AlgorithmTrainerModalProps> = ({
   const longPressTimeoutRef = useRef<number | null>(null);
   const startLongPress = (idx: number) => {
     longPressTimeoutRef.current = window.setTimeout(() => {
-      onDeleteSolve(alg.id, idx);
+      if (alg) {
+        onDeleteSolve(alg.id, idx);
+      }
     }, 600); // 600ms hold
   };
   const cancelLongPress = () => {
