@@ -526,12 +526,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .main-column {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 /* Stats Panel */
@@ -682,6 +684,7 @@ body {
 .table-responsive {
   max-height: 380px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
 .solves-table {

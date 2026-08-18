@@ -52,8 +52,8 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
           nameNorm.includes(q) ||
           groupNorm.includes(q) ||
           idNorm.includes(q) ||
-          movesNorm.includes(q) ||
-          catNorm.includes(q)
+          catNorm.includes(q) ||
+          (q.length > 2 && movesNorm.includes(q))
         );
       });
       return list;
