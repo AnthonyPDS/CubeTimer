@@ -16,6 +16,7 @@ const SESSIONS_KEY = 'cubetimer_sessions_v1';
 const SOLVES_KEY = 'cubetimer_solves_v1';
 const ALG_FAVS_KEY = 'cubetimer_alg_favs_v1';
 const ALG_SOLVES_KEY = 'cubetimer_alg_solves_v1';
+const SOLVE_MODE_KEY = 'cubetimer_solve_mode_v1';
 
 export const App: React.FC = () => {
   // Load initial sessions
@@ -42,6 +43,14 @@ export const App: React.FC = () => {
 
   const [inspectionEnabled, setInspectionEnabled] = useState<boolean>(false);
   const [cfopModeEnabled, setCfopModeEnabled] = useState<boolean>(false);
+  const [isSolveMode, setIsSolveMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem(SOLVE_MODE_KEY);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(SOLVE_MODE_KEY, JSON.stringify(isSolveMode));
+  }, [isSolveMode]);
 
   // App Navigation State
   const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'algorithms'>('timer');
@@ -380,18 +389,29 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${activeTab === 'timer' ? 'timer-tab-active' : ''}`}>
       {/* App Header */}
       <header className="app-header">
         <div className="logo-group">
-          <div className="logo-icon">
+          <div className="logo-icon" title="CubeTimer">
             <Box size={24} />
           </div>
-          <div>
-            <h1 className="app-title">CubeTimer Minimal</h1>
-            <span className="subtitle">Speedcubing Timer & WCA Stats</span>
+
+          {/* Mode Switch (Resolução vs Opções/Gerenciamento) */}
+          <div className="solve-mode-lever-container">
+            <button
+              onClick={() => setIsSolveMode(!isSolveMode)}
+              className={`solve-mode-pill ${isSolveMode ? 'mode-solve' : 'mode-manage'}`}
+              title={isSolveMode ? "Modo Resolução Ativo (Clique para gerenciar sessões e opções)" : "Modo Opções Ativo (Clique para voltar ao modo resolução)"}
+            >
+              <span className="lever-indicator" />
+              <span className="lever-text">
+                {isSolveMode ? 'Resolução' : 'Opções'}
+              </span>
+            </button>
           </div>
-          <nav className="header-tabs desktop-only" style={{ marginLeft: '20px' }}>
+
+          <nav className="header-tabs desktop-only" style={{ marginLeft: 'auto' }}>
             <button
               className={`tab-btn ${activeTab === 'timer' || activeTab === 'stats' ? 'active' : ''}`}
               onClick={() => setActiveTab('timer')}
@@ -417,30 +437,36 @@ export const App: React.FC = () => {
             
             {/* TIMER VIEW (Shown on desktop always, on mobile only if 'timer' tab) */}
             <div className={`timer-section ${activeTab === 'timer' ? 'mobile-active' : 'mobile-hidden'}`}>
-              <SessionSelector
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                onSelectSession={setActiveSessionId}
-                onCreateSession={handleCreateSession}
-                onRenameSession={handleRenameSession}
-                onExportData={handleExportData}
-                onImportData={handleImportData}
-                inspectionEnabled={inspectionEnabled}
-                onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
-                cfopModeEnabled={cfopModeEnabled}
-                onToggleCfopMode={() => setCfopModeEnabled(!cfopModeEnabled)}
-              />
+              {!isSolveMode && (
+                <div className="fade-in session-bar-wrapper">
+                  <SessionSelector
+                    sessions={sessions}
+                    activeSessionId={activeSessionId}
+                    onSelectSession={setActiveSessionId}
+                    onCreateSession={handleCreateSession}
+                    onRenameSession={handleRenameSession}
+                    onExportData={handleExportData}
+                    onImportData={handleImportData}
+                    inspectionEnabled={inspectionEnabled}
+                    onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
+                    cfopModeEnabled={cfopModeEnabled}
+                    onToggleCfopMode={() => setCfopModeEnabled(!cfopModeEnabled)}
+                  />
+                </div>
+              )}
 
               <ScrambleDisplay
                 scramble={currentScramble}
                 cubeState={cubeState}
                 onNewScramble={newScramble}
+                disabled={!isSolveMode}
               />
 
               <Timer
                 onSolveComplete={handleSolveComplete}
                 inspectionEnabled={inspectionEnabled}
                 cfopModeEnabled={cfopModeEnabled}
+                disabled={!isSolveMode}
               />
             </div>
 

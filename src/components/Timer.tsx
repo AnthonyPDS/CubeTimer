@@ -338,9 +338,13 @@ export const Timer: React.FC<TimerProps> = ({
   // Determine display styling and instruction text
   let timerClass = 'timer-display';
   let displayContent = formatTime(elapsedTime);
-  let instructionText = 'Pressione a BARRA DE ESPAÇO ou toque na tela para iniciar';
+  let instructionText = disabled
+    ? 'Modo Resolução desativado (ative a alavanca no topo para cronometrar)'
+    : 'Pressione a BARRA DE ESPAÇO ou toque na tela para iniciar';
 
-  if (inspectionEnabled && timerState === 'idle') {
+  if (disabled) {
+    timerClass += ' timer-disabled';
+  } else if (inspectionEnabled && timerState === 'idle') {
     instructionText = 'PRESSIONE A BARRA DE ESPAÇO PARA INICIAR A INSPEÇÃO (15s)';
   }
 

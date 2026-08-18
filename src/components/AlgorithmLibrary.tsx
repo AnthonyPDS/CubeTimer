@@ -34,7 +34,30 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
 
   // Filter algorithms
   const filteredAlgorithms = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // If searching, search across all algorithms unless specified
     let list: AlgorithmCase[] = [];
+
+    if (q) {
+      // Global search across ALL algorithms
+      list = ALL_ALGORITHMS.filter((a) => {
+        const nameNorm = a.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const groupNorm = a.group.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const idNorm = a.id.toLowerCase();
+        const movesNorm = a.moves.toLowerCase();
+        const catNorm = a.category.toLowerCase();
+
+        return (
+          nameNorm.includes(q) ||
+          groupNorm.includes(q) ||
+          idNorm.includes(q) ||
+          movesNorm.includes(q) ||
+          catNorm.includes(q)
+        );
+      });
+      return list;
+    }
 
     if (activeCategory === 'PLL') list = PLL_ALGORITHMS;
     else if (activeCategory === 'OLL') list = OLL_ALGORITHMS;
@@ -46,17 +69,6 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
     // Filter by group
     if (selectedGroup !== 'ALL') {
       list = list.filter((a) => a.group === selectedGroup);
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (a) =>
-          a.name.toLowerCase().includes(q) ||
-          a.moves.toLowerCase().includes(q) ||
-          a.group.toLowerCase().includes(q)
-      );
     }
 
     return list;

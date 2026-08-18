@@ -95,10 +95,11 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
 
         <button
           onClick={() => setShowNewModal(true)}
-          className="btn-secondary-sm"
-          title="Criar nova sessão"
+          className="icon-button"
+          title="Nova Sessão"
+          aria-label="Nova Sessão"
         >
-          <Plus size={14} /> Nova Sessão
+          <Plus size={16} />
         </button>
       </div>
 
@@ -106,31 +107,40 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
         {/* Toggle CFOP Splits Mode */}
         <button
           onClick={onToggleCfopMode}
-          className={`toggle-button ${cfopModeEnabled ? 'active' : ''}`}
-          title="Ativar/Desativar modo de medição por etapas (Cruz, F2L, OLL, PLL)"
+          className={`icon-button ${cfopModeEnabled ? 'active' : ''}`}
+          title={`Etapas CFOP: ${cfopModeEnabled ? 'Ativado' : 'Desativado'}`}
+          aria-label="Alternar Etapas CFOP"
         >
-          <Layers size={14} />
-          Etapas CFOP: <strong>{cfopModeEnabled ? 'ON' : 'OFF'}</strong>
+          <Layers size={16} />
         </button>
 
         {/* Toggle Inspection Timer */}
         <button
           onClick={onToggleInspection}
-          className={`toggle-button ${inspectionEnabled ? 'active' : ''}`}
-          title="Ativar/Desativar tempo de inspeção WCA de 15 segundos"
+          className={`icon-button ${inspectionEnabled ? 'active' : ''}`}
+          title={`Inspeção WCA (15s): ${inspectionEnabled ? 'Ativada' : 'Desativada'}`}
+          aria-label="Alternar Inspeção WCA"
         >
-          <Clock size={14} />
-          Inspeção (15s): <strong>{inspectionEnabled ? 'ON' : 'OFF'}</strong>
+          <Clock size={16} />
         </button>
 
         {/* Export JSON */}
-        <button onClick={onExportData} className="btn-secondary-sm" title="Exportar dados da sessão">
-          <Download size={14} /> Exportar
+        <button
+          onClick={onExportData}
+          className="icon-button"
+          title="Exportar dados da sessão"
+          aria-label="Exportar dados"
+        >
+          <Download size={16} />
         </button>
 
         {/* Import JSON / TXT */}
-        <label className="btn-secondary-sm cursor-pointer" title="Importar arquivo JSON ou TXT (csTimer / CubeTimer)">
-          <Upload size={14} /> Importar
+        <label
+          className="icon-button cursor-pointer"
+          title="Importar arquivo JSON ou TXT (csTimer / CubeTimer)"
+          aria-label="Importar arquivo"
+        >
+          <Upload size={16} />
           <input
             type="file"
             accept=".json,.txt,text/plain,application/json,*"
