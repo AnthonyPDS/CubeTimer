@@ -11,7 +11,18 @@ import type { Solve, Session, CubeState, SolveSplits } from './types';
 import type { AlgorithmCase } from './data/cfopAlgorithms';
 import { generateScramble, getCubeStateFromScramble, getInitialCubeState } from './utils/scrambleGenerator';
 import { calculateStats } from './utils/statsCalculator';
-import { Box, Timer as TimerIcon, BookOpen, BarChart2 } from 'lucide-react';
+import { Box, Timer as TimerIcon, BookOpen, BarChart2, User as UserIcon, Cloud } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { AuthModal } from './components/AuthModal';
+import {
+  loadCloudUserData,
+  migrateLocalToCloud,
+  saveSolveToCloud,
+  deleteSolveFromCloud,
+  saveSessionToCloud,
+  renameSessionInCloud
+} from './services/syncService';
+import type { User } from '@supabase/supabase-js';
 
 const SESSIONS_KEY = 'cubetimer_sessions_v1';
 const SOLVES_KEY = 'cubetimer_solves_v1';
@@ -67,6 +78,72 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'algorithms'>('timer');
   const [trainingAlg, setTrainingAlg] = useState<AlgorithmCase | null>(null);
 
+  // Algorithm Library State
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem(ALG_FAVS_KEY);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [];
+  });
+
+  const [algSolves, setAlgSolves] = useState<Record<string, number[]>>(() => {
+    const saved = localStorage.getItem(ALG_SOLVES_KEY);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem(ALG_FAVS_KEY, JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem(ALG_SOLVES_KEY, JSON.stringify(algSolves));
+  }, [algSolves]);
+
+  // User Authentication & Cloud Sync State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  const handleUserLoggedIn = useCallback(async (userId: string) => {
+    const cloudData = await loadCloudUserData(userId);
+    if (cloudData && cloudData.sessions.length > 0) {
+      setSessions(cloudData.sessions);
+      setSolves(cloudData.solves);
+      setFavorites(cloudData.favorites);
+      setAlgSolves(cloudData.algSolves);
+      if (cloudData.sessions[0]) {
+        setActiveSessionId(cloudData.sessions[0].id);
+      }
+    } else {
+      // Migração automática na primeira vez que o usuário loga
+      await migrateLocalToCloud(userId, sessions, solves, favorites, algSolves);
+    }
+  }, [sessions, solves, favorites, algSolves]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        handleUserLoggedIn(session.user.id);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user || null;
+      setCurrentUser(user);
+      if (user) {
+        handleUserLoggedIn(user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [handleUserLoggedIn]);
+
   // Synchronize browser history (popstate) for mobile back button navigation
   useEffect(() => {
     window.history.replaceState({ tab: 'timer' }, '');
@@ -120,31 +197,6 @@ export const App: React.FC = () => {
       window.history.back();
     }
   };
-
-  // Algorithm Library State
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem(ALG_FAVS_KEY);
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return [];
-  });
-
-  const [algSolves, setAlgSolves] = useState<Record<string, number[]>>(() => {
-    const saved = localStorage.getItem(ALG_SOLVES_KEY);
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return {};
-  });
-
-  useEffect(() => {
-    localStorage.setItem(ALG_FAVS_KEY, JSON.stringify(favorites));
-  }, [favorites]);
-
-  useEffect(() => {
-    localStorage.setItem(ALG_SOLVES_KEY, JSON.stringify(algSolves));
-  }, [algSolves]);
 
   // Scramble State
   const [currentScramble, setCurrentScramble] = useState<string>('');
@@ -212,6 +264,9 @@ export const App: React.FC = () => {
     }
 
     setSolves((prev) => [...prev, newSolve]);
+    if (currentUser) {
+      saveSolveToCloud(currentUser.id, newSolve);
+    }
     newScramble();
   };
 
@@ -222,7 +277,11 @@ export const App: React.FC = () => {
         if (s.id === solveId) {
           let updatedTime = s.rawTime;
           if (penalty === '+2') updatedTime = s.rawTime + 2000;
-          return { ...s, penalty, time: updatedTime };
+          const updatedSolve = { ...s, penalty, time: updatedTime };
+          if (currentUser) {
+            saveSolveToCloud(currentUser.id, updatedSolve);
+          }
+          return updatedSolve;
         }
         return s;
       })
@@ -233,13 +292,20 @@ export const App: React.FC = () => {
   const handleDeleteSolve = (solveId: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta resolução?')) {
       setSolves((prev) => prev.filter((s) => s.id !== solveId));
+      if (currentUser) {
+        deleteSolveFromCloud(currentUser.id, solveId);
+      }
     }
   };
 
   // Clear all solves in session
   const handleClearSolves = () => {
     if (window.confirm('Tem certeza que deseja limpar TODAS as resoluções desta sessão?')) {
+      const solvesToDelete = solves.filter((s) => s.sessionId === activeSessionId);
       setSolves((prev) => prev.filter((s) => s.sessionId !== activeSessionId));
+      if (currentUser) {
+        solvesToDelete.forEach((s) => deleteSolveFromCloud(currentUser.id, s.id));
+      }
     }
   };
 
@@ -252,6 +318,9 @@ export const App: React.FC = () => {
     };
     setSessions((prev) => [...prev, newSess]);
     setActiveSessionId(newSess.id);
+    if (currentUser) {
+      saveSessionToCloud(currentUser.id, newSess);
+    }
   };
 
   // Rename Session
@@ -259,6 +328,9 @@ export const App: React.FC = () => {
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, name: newName } : s))
     );
+    if (currentUser) {
+      renameSessionInCloud(currentUser.id, id, newName);
+    }
   };
 
   // Helper to parse csTimer backup format
@@ -496,6 +568,29 @@ export const App: React.FC = () => {
               <span>Algoritmos CFOP</span>
             </button>
           </nav>
+
+          {/* User Account / Auth Button */}
+          <div className="auth-header-btn-container" style={{ marginLeft: '12px' }}>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className={`auth-header-btn ${currentUser ? 'logged-in' : ''}`}
+              title={currentUser ? `Conta: ${currentUser.email}` : "Entrar / Sincronizar na Nuvem"}
+            >
+              {currentUser ? (
+                <>
+                  <UserIcon size={16} className="text-green" />
+                  <span className="user-name-span desktop-only">
+                    {currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0]}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Cloud size={16} />
+                  <span className="desktop-only">Entrar</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -624,6 +719,22 @@ export const App: React.FC = () => {
           <span>Algoritmos</span>
         </button>
       </nav>
+
+      {/* AUTH & CLOUD SYNC MODAL */}
+      {showAuthModal && (
+        <AuthModal
+          user={currentUser}
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={() => {
+            if (currentUser) handleUserLoggedIn(currentUser.id);
+          }}
+          onLogout={() => {
+            setCurrentUser(null);
+          }}
+          totalSolvesCount={solves.length}
+          totalSessionsCount={sessions.length}
+        />
+      )}
     </div>
   );
 };
