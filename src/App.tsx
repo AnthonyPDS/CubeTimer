@@ -8,6 +8,7 @@ import { ProgressChart } from './components/ProgressChart';
 import { SessionSelector } from './components/SessionSelector';
 import { AlgorithmLibrary } from './components/AlgorithmLibrary';
 import type { Solve, Session, CubeState, SolveSplits } from './types';
+import type { AlgorithmCase } from './data/cfopAlgorithms';
 import { generateScramble, getCubeStateFromScramble, getInitialCubeState } from './utils/scrambleGenerator';
 import { calculateStats } from './utils/statsCalculator';
 import { Box, Timer as TimerIcon, BookOpen, BarChart2 } from 'lucide-react';
@@ -62,8 +63,63 @@ export const App: React.FC = () => {
     localStorage.setItem(SOLVE_MODE_KEY, JSON.stringify(isSolveMode));
   }, [isSolveMode]);
 
-  // App Navigation State
+  // App Navigation & History State
   const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'algorithms'>('timer');
+  const [trainingAlg, setTrainingAlg] = useState<AlgorithmCase | null>(null);
+
+  // Synchronize browser history (popstate) for mobile back button navigation
+  useEffect(() => {
+    window.history.replaceState({ tab: 'timer' }, '');
+
+    const handlePopState = (e: PopStateEvent) => {
+      const state = e.state;
+      if (!state || state.tab === 'timer') {
+        setActiveTab('timer');
+        setTrainingAlg(null);
+      } else if (state.tab === 'stats') {
+        setActiveTab('stats');
+        setTrainingAlg(null);
+      } else if (state.tab === 'algorithms') {
+        setActiveTab('algorithms');
+        if (state.modal !== 'trainer') {
+          setTrainingAlg(null);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleTabChange = (newTab: 'timer' | 'stats' | 'algorithms') => {
+    if (newTab === activeTab && !trainingAlg) return;
+    setTrainingAlg(null);
+
+    if (newTab === 'timer') {
+      if (window.history.state?.tab && window.history.state.tab !== 'timer') {
+        window.history.pushState({ tab: 'timer' }, '');
+      }
+    } else {
+      if (window.history.state?.tab === 'stats' || window.history.state?.tab === 'algorithms') {
+        window.history.replaceState({ tab: newTab }, '');
+      } else {
+        window.history.pushState({ tab: newTab }, '');
+      }
+    }
+    setActiveTab(newTab);
+  };
+
+  const handleOpenTrainer = (alg: AlgorithmCase) => {
+    setTrainingAlg(alg);
+    window.history.pushState({ tab: 'algorithms', modal: 'trainer' }, '');
+  };
+
+  const handleCloseTrainer = () => {
+    setTrainingAlg(null);
+    if (window.history.state?.modal === 'trainer') {
+      window.history.back();
+    }
+  };
 
   // Algorithm Library State
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -427,14 +483,14 @@ export const App: React.FC = () => {
           <nav className="header-tabs desktop-only" style={{ marginLeft: 'auto' }}>
             <button
               className={`tab-btn ${activeTab === 'timer' || activeTab === 'stats' ? 'active' : ''}`}
-              onClick={() => setActiveTab('timer')}
+              onClick={() => handleTabChange('timer')}
             >
               <TimerIcon size={18} />
               <span>Cronômetro & Estatísticas</span>
             </button>
             <button
               className={`tab-btn ${activeTab === 'algorithms' ? 'active' : ''}`}
-              onClick={() => setActiveTab('algorithms')}
+              onClick={() => handleTabChange('algorithms')}
             >
               <BookOpen size={18} />
               <span>Algoritmos CFOP</span>
@@ -546,21 +602,24 @@ export const App: React.FC = () => {
                 });
               }
             }}
+            trainingAlg={trainingAlg}
+            onOpenTrainer={handleOpenTrainer}
+            onCloseTrainer={handleCloseTrainer}
           />
         )}
       </div>
 
       {/* MOBILE BOTTOM NAV */}
       <nav className="mobile-bottom-nav">
-        <button className={`bottom-nav-item ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => setActiveTab('timer')}>
+        <button className={`bottom-nav-item ${activeTab === 'timer' ? 'active' : ''}`} onClick={() => handleTabChange('timer')}>
           <TimerIcon size={22} />
           <span>Timer</span>
         </button>
-        <button className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+        <button className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => handleTabChange('stats')}>
           <BarChart2 size={22} />
           <span>Estatísticas</span>
         </button>
-        <button className={`bottom-nav-item ${activeTab === 'algorithms' ? 'active' : ''}`} onClick={() => setActiveTab('algorithms')}>
+        <button className={`bottom-nav-item ${activeTab === 'algorithms' ? 'active' : ''}`} onClick={() => handleTabChange('algorithms')}>
           <BookOpen size={22} />
           <span>Algoritmos</span>
         </button>

@@ -17,6 +17,9 @@ interface AlgorithmLibraryProps {
   algSolves: Record<string, number[]>;
   onSaveAlgSolve: (algId: string, timeMs: number) => void;
   onDeleteAlgSolve: (algId: string, solveIndex: number) => void;
+  trainingAlg: AlgorithmCase | null;
+  onOpenTrainer: (alg: AlgorithmCase) => void;
+  onCloseTrainer: () => void;
 }
 
 export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
@@ -25,14 +28,13 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
   algSolves,
   onSaveAlgSolve,
   onDeleteAlgSolve,
+  trainingAlg,
+  onOpenTrainer,
+  onCloseTrainer,
 }) => {
   const [activeCategory, setActiveCategory] = useState<CfopCategory | 'FAVORITES'>('PLL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
-
-
-  // Trainer Modal State
-  const [trainingAlg, setTrainingAlg] = useState<AlgorithmCase | null>(null);
 
   // Filter algorithms
   const filteredAlgorithms = useMemo(() => {
@@ -80,7 +82,7 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
     return (
       <AlgorithmTrainerModal
         alg={trainingAlg}
-        onClose={() => setTrainingAlg(null)}
+        onClose={onCloseTrainer}
         solves={algSolves[trainingAlg.id] || []}
         onSaveSolve={onSaveAlgSolve}
         onDeleteSolve={onDeleteAlgSolve}
@@ -158,7 +160,7 @@ export const AlgorithmLibrary: React.FC<AlgorithmLibraryProps> = ({
               <div 
                 key={alg.id} 
                 className="alg-card cursor-pointer"
-                onClick={() => setTrainingAlg(alg)}
+                onClick={() => onOpenTrainer(alg)}
               >
                 <div className="alg-card-header">
                   <div>
