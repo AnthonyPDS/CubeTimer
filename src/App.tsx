@@ -68,7 +68,10 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const effectivelySolveMode = !isMobile || isSolveMode;
+  // No desktop, a barra de sessões/opções está sempre visível e o timer sempre ativo.
+  // No mobile, a alavanca alterna entre Modo Resolução (esconde barra) e Modo Opções (mostra barra e desativa timer).
+  const hideSessionBarOnMobile = isMobile && isSolveMode;
+  const isTimerDisabledOnMobile = isMobile && !isSolveMode;
 
   useEffect(() => {
     localStorage.setItem(SOLVE_MODE_KEY, JSON.stringify(isSolveMode));
@@ -601,7 +604,7 @@ export const App: React.FC = () => {
             
             {/* TIMER VIEW (Shown on desktop always, on mobile only if 'timer' tab) */}
             <div className={`timer-section ${activeTab === 'timer' ? 'mobile-active' : 'mobile-hidden'}`}>
-              {!effectivelySolveMode && (
+              {!hideSessionBarOnMobile && (
                 <div className="fade-in session-bar-wrapper">
                   <SessionSelector
                     sessions={sessions}
@@ -623,14 +626,14 @@ export const App: React.FC = () => {
                 scramble={currentScramble}
                 cubeState={cubeState}
                 onNewScramble={newScramble}
-                disabled={!effectivelySolveMode}
+                disabled={isTimerDisabledOnMobile}
               />
 
               <Timer
                 onSolveComplete={handleSolveComplete}
                 inspectionEnabled={inspectionEnabled}
                 cfopModeEnabled={cfopModeEnabled}
-                disabled={!effectivelySolveMode}
+                disabled={isTimerDisabledOnMobile}
               />
             </div>
 
